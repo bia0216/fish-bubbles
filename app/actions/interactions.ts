@@ -91,6 +91,12 @@ export async function toggleFollow(targetId: string) {
       .eq("follower_id", user.id).eq("followed_id", targetId);
   } else {
     await supabase.from("school").insert({ follower_id: user.id, followed_id: targetId });
+    await supabase.from("nibbles").insert({
+      recipient_id: targetId,
+      actor_id: user.id,
+      type: "follow",
+      bubble_id: null,
+    });
   }
 
   revalidatePath("/");

@@ -26,6 +26,7 @@ export default async function NibblesPage() {
   const label = (type: string) => {
     if (type === "fish") return "fished your bubble";
     if (type === "ripple") return "rippled your bubble";
+    if (type === "follow") return "joined your school";
     return "bubbled back at you";
   };
 
