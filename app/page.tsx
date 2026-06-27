@@ -10,7 +10,7 @@ import DeleteBubble from "./components/DeleteBubble";
 import SearchBar from "./components/SearchBar";
 import NibbleBell from "./components/NibbleBell";
 import RealtimeFeed from "./components/RealtimeFeed";
-
+import ProfileLink from "./components/ProfileLink";
 
 export default async function Home({
   searchParams,
@@ -79,6 +79,7 @@ export default async function Home({
             <span className="font-semibold text-lg">Fish Bubbles</span>
           </div>
           <div className="flex items-center gap-3">
+            <ProfileLink />
             <div className="hidden sm:block w-44">
               <SearchBar />
             </div>
