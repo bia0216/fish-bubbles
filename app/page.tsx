@@ -1,65 +1,169 @@
-import Image from "next/image";
+import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
+import Link from "next/link";
+import Composer from "./components/Composer";
+import LogoutButton from "./components/LogoutButton";
+import BubbleActions from "./components/BubbleActions";
+import Avatar from "./components/Avatar";
+import { timeAgo } from "./lib/timeAgo";
+import DeleteBubble from "./components/DeleteBubble";
+import SearchBar from "./components/SearchBar";
+import NibbleBell from "./components/NibbleBell";
+import RealtimeFeed from "./components/RealtimeFeed";
 
-export default function Home() {
+
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ feed?: string }>;
+}) {
+  const { feed } = await searchParams;
+  const schoolOnly = feed === "school";
+
+  const supabase = await createClient();
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const [
+    { data: bubbles },
+    { data: stats },
+    { data: myFish },
+    { data: myRipples },
+    { data: replies },
+    { data: mySchool },
+  ] = await Promise.all([
+    supabase
+      .from("bubbles")
+      .select("*, author:profiles!bubbles_author_id_fkey(username, display_name, avatar_url)")
+      .is("parent_id", null)
+      .order("created_at", { ascending: false })
+      .limit(50),
+    supabase.from("bubble_stats").select("*"),
+    supabase.from("fish").select("bubble_id").eq("user_id", user.id),
+    supabase.from("ripples").select("bubble_id").eq("user_id", user.id),
+    supabase
+      .from("bubbles")
+      .select("id, text, parent_id, created_at, author:profiles!bubbles_author_id_fkey(username, display_name)")
+      .not("parent_id", "is", null)
+      .order("created_at", { ascending: true }),
+    supabase.from("school").select("followed_id").eq("follower_id", user.id),
+  ]);
+
+  const replyMap = new Map<string, any[]>();
+  replies?.forEach((r) => {
+    const list = replyMap.get(r.parent_id) || [];
+    list.push(r);
+    replyMap.set(r.parent_id, list);
+  });
+
+  const statMap = new Map(stats?.map((s) => [s.bubble_id, s]));
+  const likedSet = new Set(myFish?.map((f) => f.bubble_id));
+  const rippledSet = new Set(myRipples?.map((r) => r.bubble_id));
+
+  const followedIds = new Set(mySchool?.map((s) => s.followed_id));
+  const visibleBubbles = schoolOnly
+    ? bubbles?.filter((b) => followedIds.has(b.author_id))
+    : bubbles;
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <main className="min-h-screen bg-aqua">
+      <header className="bg-navy text-aqua sticky top-0 z-10">
+        <div className="max-w-xl mx-auto flex items-center justify-between px-4 py-3">
+          <div className="flex items-center gap-2">
+            <svg width="28" height="28" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+              <path d="M50 110 Q105 50 155 110 Q105 170 50 110 Z" fill="none" stroke="#FF6B35" strokeWidth="11" strokeLinejoin="round" strokeLinecap="round"/>
+              <path d="M155 110 L200 78 L200 142 Z" fill="none" stroke="#FF6B35" strokeWidth="11" strokeLinejoin="round" strokeLinecap="round"/>
+              <circle cx="82" cy="100" r="7" fill="#d3edf0"/>
+            </svg>
+            <span className="font-semibold text-lg">Fish Bubbles</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="hidden sm:block w-44">
+              <SearchBar />
+            </div>
+            <Link href="/search" className="sm:hidden hover:text-coral transition" aria-label="Search">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2"/>
+                <path d="M21 21l-4.3-4.3" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
+            </Link>
+            <NibbleBell />
+            <LogoutButton />
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+      </header>
+
+      <div className="max-w-xl mx-auto px-4 pt-3">
+        <div className="flex gap-1 bg-offwhite rounded-full p-1 border border-teal/20 w-fit">
+          <Link
+            href="/"
+            className={`px-4 py-1.5 rounded-full text-sm font-medium transition ${
+              !schoolOnly ? "bg-coral text-white" : "text-teal hover:text-coral"
+            }`}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            The Stream
+          </Link>
+          <Link
+            href="/?feed=school"
+            className={`px-4 py-1.5 rounded-full text-sm font-medium transition ${
+              schoolOnly ? "bg-coral text-white" : "text-teal hover:text-coral"
+            }`}
           >
-            Documentation
-          </a>
+            My School
+          </Link>
         </div>
-      </main>
-    </div>
+      </div>
+
+      <div className="max-w-xl mx-auto px-4 py-4 flex flex-col gap-4">
+        <RealtimeFeed />
+        <Composer userId={user.id} />
+
+        <div className="flex flex-col gap-3">
+          {visibleBubbles?.map((b) => {
+            const s = statMap.get(b.id);
+            return (
+              <article key={b.id} className="bg-offwhite rounded-2xl p-4 border border-teal/20">
+                <div className="flex items-start justify-between mb-2">
+                  <Link href={`/u/${b.author?.username}`} className="flex items-center gap-2 hover:opacity-80 transition w-fit">
+                    <Avatar avatarUrl={b.author?.avatar_url} size={40} />
+                    <div className="flex flex-col">
+                      <span className="font-medium text-navy leading-tight">
+                        {b.author?.display_name || "A fish"}
+                      </span>
+                      <span className="text-teal text-sm leading-tight">
+                        @{b.author?.username} · {timeAgo(b.created_at)}
+                      </span>
+                    </div>
+                  </Link>
+                  {b.author_id === user.id && <DeleteBubble bubbleId={b.id} />}
+                </div>
+                {b.text && <p className="text-navy whitespace-pre-wrap mb-2">{b.text}</p>}
+                {b.media_url && b.media_type === "image" && (
+                  <img src={b.media_url} alt="" className="rounded-xl max-h-60 w-auto object-cover" />
+                )}
+                <BubbleActions
+                  bubbleId={b.id}
+                  fishCount={s?.fish_count || 0}
+                  rippleCount={s?.ripple_count || 0}
+                  replyCount={s?.reply_count || 0}
+                  likedByMe={likedSet.has(b.id)}
+                  rippledByMe={rippledSet.has(b.id)}
+                  replies={replyMap.get(b.id) || []}
+                />
+              </article>
+            );
+          })}
+
+          {visibleBubbles?.length === 0 && (
+            <p className="text-center text-teal py-8">
+              {schoolOnly
+                ? "Your school is quiet. Follow some fish to see their bubbles! 🐟"
+                : "No bubbles yet. Be the first to blow one! 🐟"}
+            </p>
+          )}
+        </div>
+      </div>
+    </main>
   );
 }
