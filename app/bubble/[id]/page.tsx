@@ -5,6 +5,7 @@ import Avatar from "../../components/Avatar";
 import BubbleActions from "../../components/BubbleActions";
 import { timeAgo } from "../../lib/timeAgo";
 import { getMutualIds, canSeeBubble } from "../../lib/visibility";
+
 export default async function BubblePage({
   params,
 }: {
@@ -56,13 +57,10 @@ export default async function BubblePage({
     frontier = level.map((r) => r.id);
   }
 
-  // Group every reply under its parent for recursive nesting
-  const repliesByParent = new Map<string, any[]>();
-  allReplies.forEach((r) => {
-    const list = repliesByParent.get(r.parent_id) || [];
-    list.push(r);
-    repliesByParent.set(r.parent_id, list);
-  });
+  // Map each bubble id → its author's username, to show "bubbling back to"
+  const authorById = new Map<string, string>();
+  authorById.set(bubble.id, bubble.author?.username);
+  allReplies.forEach((r) => authorById.set(r.id, r.author?.username));
 
   const [{ data: stats }, { data: myFish }, { data: myRipples }] = await Promise.all([
     supabase.from("bubble_stats").select("*"),
@@ -74,13 +72,16 @@ export default async function BubblePage({
   const likedSet = new Set(myFish?.map((f) => f.bubble_id));
   const rippledSet = new Set(myRipples?.map((r) => r.bubble_id));
 
-  const renderBubble = (b: any, isMain: boolean) => {
+  const renderBubble = (b: any, isMain: boolean, replyingTo?: string | null) => {
     const s = statMap.get(b.id);
     return (
       <article
         key={b.id}
         className={`bg-offwhite rounded-2xl p-4 border ${isMain ? "border-coral/30" : "border-teal/20"}`}
       >
+        {replyingTo && (
+          <p className="text-teal text-xs mb-1">↳ bubbling back to @{replyingTo}</p>
+        )}
         <Link href={`/u/${b.author?.username}`} className="flex items-center gap-2 mb-2 hover:opacity-80 transition w-fit">
           <Avatar avatarUrl={b.author?.avatar_url} size={40} />
           <div className="flex flex-col">
@@ -104,23 +105,6 @@ export default async function BubblePage({
     );
   };
 
-  const renderThread = (parentId: string, depth: number): React.ReactNode => {
-    const kids = repliesByParent.get(parentId) || [];
-    if (kids.length === 0) return null;
-    // Only indent for the first couple of levels; deeper replies stay at the same indent
-    const indent = depth < 2;
-    return (
-      <div className={`flex flex-col gap-3 ${indent ? "pl-4 border-l-2 ml-1" : ""} ${depth === 0 ? "border-teal/20" : "border-coral/20"}`}>
-        {kids.map((k) => (
-          <div key={k.id} className="flex flex-col gap-3">
-            {renderBubble(k, false)}
-            {renderThread(k.id, depth + 1)}
-          </div>
-        ))}
-      </div>
-    );
-  };
-
   return (
     <main className="min-h-screen bg-aqua">
       <header className="bg-navy text-aqua sticky top-0 z-10">
@@ -133,9 +117,17 @@ export default async function BubblePage({
       <div className="max-w-xl mx-auto px-4 py-4 flex flex-col gap-3">
         {renderBubble(bubble, true)}
 
-        {renderThread(bubble.id, 0)}
-
-        {allReplies.length === 0 && (
+        {allReplies.length > 0 ? (
+          <div className="flex flex-col gap-3 pl-3 border-l-2 border-teal/20">
+            {allReplies.map((r) =>
+              renderBubble(
+                r,
+                false,
+                r.parent_id === bubble.id ? null : authorById.get(r.parent_id)
+              )
+            )}
+          </div>
+        ) : (
           <p className="text-center text-teal py-4 text-sm">No bubble-backs yet</p>
         )}
       </div>
