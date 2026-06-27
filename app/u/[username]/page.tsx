@@ -6,6 +6,7 @@ import BubbleActions from "../../components/BubbleActions";
 import Avatar from "../../components/Avatar";
 import { timeAgo } from "../../lib/timeAgo";
 import { getMutualIds, canSeeBubble } from "../../lib/visibility";
+import BackGuard from "../../components/BackGuard"; // u/[username], bubble/[id]
 
 export default async function ProfilePage({
   params,

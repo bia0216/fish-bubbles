@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import Avatar from "../components/Avatar";
 import { timeAgo } from "../lib/timeAgo";
+import BackGuard from "../components/BackGuard";   // nibbles, settings, search
 
 export default async function NibblesPage() {
   const supabase = await createClient();
@@ -32,6 +33,7 @@ export default async function NibblesPage() {
 
   return (
     <main className="min-h-screen bg-aqua">
+            <BackGuard />
       <header className="bg-navy text-aqua sticky top-0 z-10">
         <div className="max-w-xl mx-auto flex items-center gap-4 px-4 py-3">
           <Link href="/" className="hover:text-coral transition">←</Link>

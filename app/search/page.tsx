@@ -6,6 +6,10 @@ import BubbleActions from "../components/BubbleActions";
 import { timeAgo } from "../lib/timeAgo";
 import SearchBar from "../components/SearchBar";
 import { getMutualIds, canSeeBubble } from "../lib/visibility";
+import BackGuard from "../components/BackGuard";   // nibbles, settings, search
+
+
+
 export default async function SearchPage({
   searchParams,
 }: {
@@ -54,6 +58,7 @@ export default async function SearchPage({
   
   return (
     <main className="min-h-screen bg-aqua">
+        <BackGuard />
       <header className="bg-navy text-aqua sticky top-0 z-10">
         <div className="max-w-xl mx-auto flex items-center gap-3 px-4 py-3">
           <Link href="/" className="hover:text-coral transition shrink-0">←</Link>

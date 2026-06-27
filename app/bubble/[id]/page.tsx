@@ -5,6 +5,7 @@ import Avatar from "../../components/Avatar";
 import BubbleActions from "../../components/BubbleActions";
 import { timeAgo } from "../../lib/timeAgo";
 import { getMutualIds, canSeeBubble } from "../../lib/visibility";
+import BackGuard from "../../components/BackGuard"; // u/[username], bubble/[id]
 
 export default async function BubblePage({
   params,
@@ -107,6 +108,7 @@ export default async function BubblePage({
 
   return (
     <main className="min-h-screen bg-aqua">
+      <BackGuard />
       <header className="bg-navy text-aqua sticky top-0 z-10">
         <div className="max-w-xl mx-auto flex items-center gap-4 px-4 py-3">
           <Link href="/" className="hover:text-coral transition">←</Link>
