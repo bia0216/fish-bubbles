@@ -87,10 +87,10 @@ export default async function SearchPage({
           </div>
         )}
 
-        {query && bubbles.length > 0 && (
+        {query && visibleSearchBubbles.length > 0 && (
           <div className="flex flex-col gap-3">
             <h2 className="text-navy font-semibold px-1">Bubbles</h2>
-            {bubbles.map((b) => {
+            {visibleSearchBubbles.map((b) => {
               const s = statMap.get(b.id);
               return (
                 <article key={b.id} className="bg-offwhite rounded-2xl p-4 border border-teal/20">
@@ -119,7 +119,7 @@ export default async function SearchPage({
           </div>
         )}
 
-        {query && people.length === 0 && bubbles.length === 0 && (
+        {query && people.length === 0 && visibleSearchBubbles.length === 0 && (
           <p className="text-center text-teal py-8">Nothing found for &quot;{query}&quot; 🐟</p>
         )}
       </div>

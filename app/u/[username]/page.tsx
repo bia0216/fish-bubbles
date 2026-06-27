@@ -150,7 +150,7 @@ export default async function ProfilePage({
         </div>
 
         <div className="flex flex-col gap-3">
-          {bubbles?.map((b) => {
+          {visibleProfileBubbles.map((b) => {
             const s = statMap.get(b.id);
             return (
               <article key={b.id} className="bg-offwhite rounded-2xl p-4 border border-teal/20">
@@ -179,7 +179,7 @@ export default async function ProfilePage({
             );
           })}
 
-          {bubbles?.length === 0 && (
+          {visibleProfileBubbles.length === 0 && (
             <div className="flex flex-col items-center gap-3 py-10 text-teal">
               {activeTab === "rippled" ? (
                 <svg width="40" height="24" viewBox="0 0 120 70" xmlns="http://www.w3.org/2000/svg">

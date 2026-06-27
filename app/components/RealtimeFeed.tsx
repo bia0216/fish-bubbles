@@ -16,8 +16,8 @@ export default function RealtimeFeed() {
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "bubbles" },
         (payload) => {
-          // Only count top-level Bubbles (not replies)
-          if (!payload.new.parent_id) {
+          // Only count top-level PUBLIC bubbles (never alert for private ones)
+          if (!payload.new.parent_id && payload.new.audience === "stream") {
             setNewCount((c) => c + 1);
           }
         }
