@@ -7,7 +7,6 @@ export default function BackGuard() {
   const router = useRouter();
 
   useEffect(() => {
-    // Add a history entry so hardware/gesture back has somewhere to land
     window.history.pushState(null, "", window.location.href);
 
     const onPopState = () => {
