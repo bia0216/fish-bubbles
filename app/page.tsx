@@ -156,11 +156,18 @@ export default async function Home({
           })}
 
           {visibleBubbles?.length === 0 && (
-            <p className="text-center text-teal py-8">
-              {schoolOnly
-                ? "Your school is quiet. Follow some fish to see their bubbles! 🐟"
-                : "No bubbles yet. Be the first to blow one! 🐟"}
-            </p>
+            <div className="flex flex-col items-center gap-3 py-10 text-teal">
+              <svg width="46" height="30" viewBox="0 0 200 130" xmlns="http://www.w3.org/2000/svg">
+                <path d="M40 65 Q90 25 135 65 Q90 105 40 65 Z" fill="none" stroke="#7FA8B0" strokeWidth="11" strokeLinejoin="round" strokeLinecap="round"/>
+                <path d="M135 65 L175 40 L175 90 Z" fill="none" stroke="#7FA8B0" strokeWidth="11" strokeLinejoin="round" strokeLinecap="round"/>
+                <circle cx="68" cy="56" r="6" fill="#7FA8B0"/>
+              </svg>
+              <p className="text-center">
+                {schoolOnly
+                  ? "Your school is quiet. Follow some fish to see their bubbles!"
+                  : "No bubbles yet. Be the first to blow one!"}
+              </p>
+            </div>
           )}
         </div>
       </div>
