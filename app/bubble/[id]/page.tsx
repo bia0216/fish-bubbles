@@ -107,8 +107,10 @@ export default async function BubblePage({
   const renderThread = (parentId: string, depth: number): React.ReactNode => {
     const kids = repliesByParent.get(parentId) || [];
     if (kids.length === 0) return null;
+    // Only indent for the first couple of levels; deeper replies stay at the same indent
+    const indent = depth < 2;
     return (
-      <div className={`flex flex-col gap-3 pl-4 border-l-2 ${depth === 0 ? "border-teal/20" : "border-coral/20 ml-2"}`}>
+      <div className={`flex flex-col gap-3 ${indent ? "pl-4 border-l-2 ml-1" : ""} ${depth === 0 ? "border-teal/20" : "border-coral/20"}`}>
         {kids.map((k) => (
           <div key={k.id} className="flex flex-col gap-3">
             {renderBubble(k, false)}
