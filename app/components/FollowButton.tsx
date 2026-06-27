@@ -2,7 +2,8 @@
 
 import { useState, useTransition } from "react";
 import { toggleFollow } from "../actions/interactions";
-
+import { useRouter } from "next/navigation";
+const router = useRouter();
 export default function FollowButton({
   targetId,
   initiallyFollowing,
@@ -15,7 +16,7 @@ export default function FollowButton({
 
   function handle() {
     setFollowing(!following);
-    startTransition(() => { toggleFollow(targetId); });
+    startTransition(async () => { await toggleFollow(targetId); router.refresh(); });
   }
 
   return (

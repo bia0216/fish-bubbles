@@ -89,7 +89,7 @@ export default function BubbleActions({
         </button>
 
         <button
-          onClick={() => startTransition(() => { toggleRipple(bubbleId); })}
+          onClick={() => startTransition(async () => { await toggleRipple(bubbleId); router.refresh(); })}
           title="Ripple"
           className={`group flex items-center gap-1.5 transition hover:text-coral ${rippledByMe ? "text-coral" : ""}`}
         >
@@ -99,7 +99,7 @@ export default function BubbleActions({
         </button>
 
         <button
-          onClick={() => startTransition(() => { toggleFish(bubbleId); })}
+          onClick={() => startTransition(async () => { await toggleFish(bubbleId); router.refresh(); })}
           title="Fish"
           className={`group flex items-center gap-1.5 transition hover:text-coral ${likedByMe ? "text-coral" : ""}`}
         >

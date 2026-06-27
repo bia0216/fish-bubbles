@@ -16,42 +16,52 @@ export default async function BubblePage({
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: bubble } = await supabase
+  // Fetch the bubble that was opened
+  const { data: opened } = await supabase
     .from("bubbles")
     .select("*, author:profiles!bubbles_author_id_fkey(username, display_name, avatar_url)")
     .eq("id", id)
     .maybeSingle();
 
-  if (!bubble) notFound();
+  if (!opened) notFound();
+
+  // Walk up to the root of the thread
+  let bubble = opened;
+  while (bubble.parent_id) {
+    const { data: parent } = await supabase
+      .from("bubbles")
+      .select("*, author:profiles!bubbles_author_id_fkey(username, display_name, avatar_url)")
+      .eq("id", bubble.parent_id)
+      .maybeSingle();
+    if (!parent) break;
+    bubble = parent;
+  }
+
   const mutualIds = await getMutualIds(supabase, user.id);
   if (!canSeeBubble(bubble, user.id, mutualIds)) notFound();
 
-  // Replies to this bubble
-  // Gather the full thread: direct replies AND replies to those replies
-  const { data: directReplies } = await supabase
-    .from("bubbles")
-    .select("*, author:profiles!bubbles_author_id_fkey(username, display_name, avatar_url)")
-    .eq("parent_id", id)
-    .order("created_at", { ascending: true });
+  // Gather ALL descendants of the root, however deep, starting from the root bubble
+  const allReplies: any[] = [];
+  let frontier = [bubble.id];
 
-  const directIds = directReplies?.map((r) => r.id) || [];
-
-  let nestedReplies: any[] = [];
-  if (directIds.length > 0) {
-    const { data: nested } = await supabase
+  while (frontier.length > 0) {
+    const { data: level } = await supabase
       .from("bubbles")
       .select("*, author:profiles!bubbles_author_id_fkey(username, display_name, avatar_url)")
-      .in("parent_id", directIds)
+      .in("parent_id", frontier)
       .order("created_at", { ascending: true });
-    nestedReplies = nested || [];
+
+    if (!level || level.length === 0) break;
+    allReplies.push(...level);
+    frontier = level.map((r) => r.id);
   }
 
-  // Group nested replies under their parent reply
-  const nestedByParent = new Map<string, any[]>();
-  nestedReplies.forEach((n) => {
-    const list = nestedByParent.get(n.parent_id) || [];
-    list.push(n);
-    nestedByParent.set(n.parent_id, list);
+  // Group every reply under its parent for recursive nesting
+  const repliesByParent = new Map<string, any[]>();
+  allReplies.forEach((r) => {
+    const list = repliesByParent.get(r.parent_id) || [];
+    list.push(r);
+    repliesByParent.set(r.parent_id, list);
   });
 
   const [{ data: stats }, { data: myFish }, { data: myRipples }] = await Promise.all([
@@ -94,6 +104,21 @@ export default async function BubblePage({
     );
   };
 
+  const renderThread = (parentId: string, depth: number): React.ReactNode => {
+    const kids = repliesByParent.get(parentId) || [];
+    if (kids.length === 0) return null;
+    return (
+      <div className={`flex flex-col gap-3 pl-4 border-l-2 ${depth === 0 ? "border-teal/20" : "border-coral/20 ml-2"}`}>
+        {kids.map((k) => (
+          <div key={k.id} className="flex flex-col gap-3">
+            {renderBubble(k, false)}
+            {renderThread(k.id, depth + 1)}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <main className="min-h-screen bg-aqua">
       <header className="bg-navy text-aqua sticky top-0 z-10">
@@ -106,23 +131,9 @@ export default async function BubblePage({
       <div className="max-w-xl mx-auto px-4 py-4 flex flex-col gap-3">
         {renderBubble(bubble, true)}
 
-        {(directReplies?.length ?? 0) > 0 && (
-          <div className="flex flex-col gap-3 pl-4 border-l-2 border-teal/20">
-            {directReplies?.map((r) => (
-              <div key={r.id} className="flex flex-col gap-3">
-                {renderBubble(r, false)}
-                {/* Replies to this reply, indented further */}
-                {(nestedByParent.get(r.id)?.length ?? 0) > 0 && (
-                  <div className="flex flex-col gap-3 pl-4 border-l-2 border-coral/20 ml-2">
-                    {nestedByParent.get(r.id)?.map((n) => renderBubble(n, false))}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
+        {renderThread(bubble.id, 0)}
 
-        {(directReplies?.length ?? 0) === 0 && (
+        {allReplies.length === 0 && (
           <p className="text-center text-teal py-4 text-sm">No bubble-backs yet</p>
         )}
       </div>
