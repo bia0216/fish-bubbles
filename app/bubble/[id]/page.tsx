@@ -4,7 +4,7 @@ import Link from "next/link";
 import Avatar from "../../components/Avatar";
 import BubbleActions from "../../components/BubbleActions";
 import { timeAgo } from "../../lib/timeAgo";
-
+import { getMutualIds, canSeeBubble } from "../../lib/visibility";
 export default async function BubblePage({
   params,
 }: {
@@ -23,6 +23,8 @@ export default async function BubblePage({
     .maybeSingle();
 
   if (!bubble) notFound();
+  const mutualIds = await getMutualIds(supabase, user.id);
+  if (!canSeeBubble(bubble, user.id, mutualIds)) notFound();
 
   // Replies to this bubble
   // Gather the full thread: direct replies AND replies to those replies

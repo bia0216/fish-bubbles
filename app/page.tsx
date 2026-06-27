@@ -11,7 +11,7 @@ import SearchBar from "./components/SearchBar";
 import NibbleBell from "./components/NibbleBell";
 import RealtimeFeed from "./components/RealtimeFeed";
 import ProfileLink from "./components/ProfileLink";
-
+import { getMutualIds, canSeeBubble } from "./lib/visibility";
 export default async function Home({
   searchParams,
 }: {
@@ -62,17 +62,12 @@ export default async function Home({
   const rippledSet = new Set(myRipples?.map((r) => r.bubble_id));
 
   const followedIds = new Set(mySchool?.map((s) => s.followed_id));
-
-  // A school-only bubble is visible if you're the author or you follow the author
-  const canSee = (b: any) =>
-    b.audience !== "school" ||
-    b.author_id === user.id ||
-    followedIds.has(b.author_id);
+  const mutualIds = await getMutualIds(supabase, user.id);
 
   const visibleBubbles = (schoolOnly
     ? bubbles?.filter((b) => followedIds.has(b.author_id))
     : bubbles
-  )?.filter(canSee);
+  )?.filter((b) => canSeeBubble(b, user.id, mutualIds));
 
   return (
     <main className="min-h-screen bg-aqua">

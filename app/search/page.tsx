@@ -5,7 +5,7 @@ import Avatar from "../components/Avatar";
 import BubbleActions from "../components/BubbleActions";
 import { timeAgo } from "../lib/timeAgo";
 import SearchBar from "../components/SearchBar";
-
+import { getMutualIds, canSeeBubble } from "../lib/visibility";
 export default async function SearchPage({
   searchParams,
 }: {
@@ -49,7 +49,9 @@ export default async function SearchPage({
   const statMap = new Map(stats?.map((s) => [s.bubble_id, s]));
   const likedSet = new Set(myFish?.map((f) => f.bubble_id));
   const rippledSet = new Set(myRipples?.map((r) => r.bubble_id));
-
+  const mutualIds = await getMutualIds(supabase, user.id);
+  const visibleSearchBubbles = bubbles.filter((b) => canSeeBubble(b, user.id, mutualIds));
+  
   return (
     <main className="min-h-screen bg-aqua">
       <header className="bg-navy text-aqua sticky top-0 z-10">

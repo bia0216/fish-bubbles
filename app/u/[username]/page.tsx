@@ -5,6 +5,7 @@ import FollowButton from "../../components/FollowButton";
 import BubbleActions from "../../components/BubbleActions";
 import Avatar from "../../components/Avatar";
 import { timeAgo } from "../../lib/timeAgo";
+import { getMutualIds, canSeeBubble } from "../../lib/visibility";
 
 export default async function ProfilePage({
   params,
@@ -81,6 +82,8 @@ export default async function ProfilePage({
   const statMap = new Map(stats?.map((s) => [s.bubble_id, s]));
   const likedSet = new Set(myFish?.map((f) => f.bubble_id));
   const rippledSet = new Set(myRipples?.map((r) => r.bubble_id));
+  const mutualIds = await getMutualIds(supabase, user.id);
+  const visibleProfileBubbles = bubbles.filter((b) => canSeeBubble(b, user.id, mutualIds));
 
   const isMe = user.id === profile.id;
 
