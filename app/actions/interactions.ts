@@ -111,7 +111,7 @@ export async function postReply(parentId: string, text: string) {
 
   if (error) return { error: error.message };
   await notify(supabase, user.id, parentId, "reply");
-  revalidatePath("/");
+  revalidatePath("/", "layout");
   return { ok: true };
 }
 

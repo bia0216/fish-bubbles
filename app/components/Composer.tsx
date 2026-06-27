@@ -9,6 +9,7 @@ export default function Composer({ userId }: { userId: string }) {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [posting, setPosting] = useState(false);
+  const [audience, setAudience] = useState<"stream" | "school">("stream");
   const fileInput = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const supabase = createClient();
@@ -51,6 +52,7 @@ export default function Composer({ userId }: { userId: string }) {
       text: text.trim() || null,
       media_url,
       media_type,
+      audience,
     });
 
     setPosting(false);
@@ -89,17 +91,52 @@ export default function Composer({ userId }: { userId: string }) {
         </div>
       )}
 
-      <div className="flex items-center justify-between mt-3">
-        <label className="text-teal hover:text-coral cursor-pointer transition text-sm">
-          📷 Catch
-          <input
-            ref={fileInput}
-            type="file"
-            accept="image/*"
-            onChange={pickFile}
-            className="hidden"
-          />
-        </label>
+      <div className="flex items-center justify-between mt-3 gap-2">
+        <div className="flex items-center gap-3">
+          <label className="text-teal hover:text-coral cursor-pointer transition text-sm whitespace-nowrap flex items-center gap-1">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" strokeWidth="2"/>
+              <circle cx="8.5" cy="9" r="2" stroke="currentColor" strokeWidth="2"/>
+              <path d="M5 17l4-4 3 3 3-4 4 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            Catch
+            <input
+              ref={fileInput}
+              type="file"
+              accept="image/*"
+              onChange={pickFile}
+              className="hidden"
+            />
+          </label>
+
+          <button
+            type="button"
+            onClick={() => setAudience(audience === "stream" ? "school" : "stream")}
+            className="text-xs rounded-full border border-teal/40 px-3 py-1 text-teal hover:border-coral hover:text-coral transition whitespace-nowrap flex items-center gap-1.5"
+          >
+            {audience === "stream" ? (
+              <>
+                <svg width="16" height="11" viewBox="0 0 120 70" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M10 22 Q60 -2 110 22" fill="none" stroke="currentColor" strokeWidth="9" strokeLinecap="round"/>
+                  <path d="M18 38 Q60 16 102 38" fill="none" stroke="currentColor" strokeWidth="8" strokeLinecap="round" opacity="0.7"/>
+                  <path d="M26 54 Q60 36 94 54" fill="none" stroke="currentColor" strokeWidth="7" strokeLinecap="round" opacity="0.45"/>
+                </svg>
+                The Stream
+              </>
+            ) : (
+              <>
+                <svg width="16" height="11" viewBox="0 0 200 130" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M40 65 Q90 25 135 65 Q90 105 40 65 Z" fill="none" stroke="currentColor" strokeWidth="13" strokeLinejoin="round" strokeLinecap="round"/>
+                  <path d="M135 65 L175 40 L175 90 Z" fill="none" stroke="currentColor" strokeWidth="13" strokeLinejoin="round" strokeLinecap="round"/>
+                  <circle cx="68" cy="56" r="7" fill="currentColor"/>
+                </svg>
+                My School
+              </>
+            )}
+          </button>
+        </div>
+
+
         <button
           onClick={postBubble}
           disabled={posting || (!text.trim() && !file)}

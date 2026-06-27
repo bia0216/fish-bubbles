@@ -2,6 +2,8 @@
 
 import { useState, useTransition } from "react";
 import { toggleFish, toggleRipple, postReply } from "../actions/interactions";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 type Reply = {
   id: string;
@@ -56,6 +58,7 @@ export default function BubbleActions({
   bubbleId, fishCount, rippleCount, replyCount, likedByMe, rippledByMe, replies = [],
 }: Props) {
   const [, startTransition] = useTransition();
+  const router = useRouter();
   const [expanded, setExpanded] = useState(false);
   const [showAll, setShowAll] = useState(false);
   const [replyText, setReplyText] = useState("");
@@ -67,6 +70,7 @@ export default function BubbleActions({
     await postReply(bubbleId, replyText);
     setReplyText("");
     setSending(false);
+    router.refresh();
   }
 
   const visibleReplies = showAll ? replies : replies.slice(0, PREVIEW);
@@ -127,25 +131,25 @@ export default function BubbleActions({
           {replies.length > 0 && (
             <div className="mt-3 flex flex-col gap-2 border-l-2 border-teal/20 pl-3">
               {visibleReplies.map((r) => (
-                <div key={r.id} className="text-sm">
+                <Link
+                  key={r.id}
+                  href={`/bubble/${bubbleId}`}
+                  className="text-sm block hover:opacity-80 transition"
+                >
                   <span className="font-medium text-navy">
                     {r.author?.display_name || "A fish"}
                   </span>{" "}
                   <span className="text-teal">@{r.author?.username}</span>
                   <p className="text-navy">{r.text}</p>
-                </div>
+                </Link>
               ))}
 
-              {replies.length > PREVIEW && (
-                <button
-                  onClick={() => setShowAll(!showAll)}
-                  className="text-coral text-sm text-left hover:underline mt-1"
-                >
-                  {showAll
-                    ? "Show fewer bubbles"
-                    : `View all ${replies.length} bubbles`}
-                </button>
-              )}
+              <Link
+                href={`/bubble/${bubbleId}`}
+                className="text-coral text-sm hover:underline mt-1"
+              >
+                Dive deeper →
+              </Link>
             </div>
           )}
         </div>

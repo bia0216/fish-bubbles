@@ -62,9 +62,17 @@ export default async function Home({
   const rippledSet = new Set(myRipples?.map((r) => r.bubble_id));
 
   const followedIds = new Set(mySchool?.map((s) => s.followed_id));
-  const visibleBubbles = schoolOnly
+
+  // A school-only bubble is visible if you're the author or you follow the author
+  const canSee = (b: any) =>
+    b.audience !== "school" ||
+    b.author_id === user.id ||
+    followedIds.has(b.author_id);
+
+  const visibleBubbles = (schoolOnly
     ? bubbles?.filter((b) => followedIds.has(b.author_id))
-    : bubbles;
+    : bubbles
+  )?.filter(canSee);
 
   return (
     <main className="min-h-screen bg-aqua">
@@ -130,7 +138,16 @@ export default async function Home({
                     <Avatar avatarUrl={b.author?.avatar_url} size={40} />
                     <div className="flex flex-col">
                       <span className="font-medium text-navy leading-tight">
-                        {b.author?.display_name || "A fish"}
+                        {b.audience === "school" && (
+                  <span className="text-xs text-teal mb-1 flex items-center gap-1">
+                    <svg width="14" height="9" viewBox="0 0 200 130" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M40 65 Q90 25 135 65 Q90 105 40 65 Z" fill="none" stroke="currentColor" strokeWidth="13" strokeLinejoin="round" strokeLinecap="round"/>
+                      <path d="M135 65 L175 40 L175 90 Z" fill="none" stroke="currentColor" strokeWidth="13" strokeLinejoin="round" strokeLinecap="round"/>
+                      <circle cx="68" cy="56" r="7" fill="currentColor"/>
+                    </svg>
+                    My School only
+                  </span>
+                )}
                       </span>
                       <span className="text-teal text-sm leading-tight">
                         @{b.author?.username} · {timeAgo(b.created_at)}

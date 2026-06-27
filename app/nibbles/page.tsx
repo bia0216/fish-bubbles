@@ -42,7 +42,7 @@ export default async function NibblesPage() {
         {nibbles?.map((n) => (
           <Link
             key={n.id}
-            href={`/u/${n.actor?.username}`}
+            href={n.bubble_id ? `/bubble/${n.bubble_id}` : `/u/${n.actor?.username}`}
             className={`flex items-center gap-3 rounded-2xl p-3 border transition hover:opacity-90 ${
               n.read ? "bg-offwhite border-teal/20" : "bg-white border-coral/40"
             }`}
